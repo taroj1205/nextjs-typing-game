@@ -173,15 +173,6 @@ function renderFurigana(text: string) {
 							{words[currentWordIndex].english.substring(inputValue.length)}
 						</span>
 					</p>
-					<input
-						ref={inputRef}
-						className="inset-0 absolute opacity-0 p-2 bg-transparent text-transparent"
-						value={inputValue}
-						onChange={handleInputChange}
-						onBlur={() => {
-							inputRef.current?.focus();
-						}}
-					/>
 				</>
 			) : (
 				<p className="text-9xl mb-4 translation">
@@ -190,6 +181,16 @@ function renderFurigana(text: string) {
 						: words[currentWordIndex].japanese.kana}
 				</p>
 			)}
+			<input
+				ref={inputRef}
+				className="inset-0 absolute opacity-0 p-2 bg-transparent text-transparent"
+				value={inputValue}
+				onChange={handleInputChange}
+				onBlur={() => {
+					inputRef.current?.focus();
+        }}
+        autoFocus
+			/>
 		</main>
 	);
 }
