@@ -8,8 +8,8 @@ export default function TypingGame() {
 	const [showTranslation, setShowTranslation] = useState(false);
 	const [typedWords, setTypedWords] = useState<string[]>([]);
 	const [isCorrect, setIsCorrect] = useState(0);
-  const inputRef = useRef<HTMLInputElement>(null);
-  const [gameHeight, setGameHeight] = useState("100svh");
+	const inputRef = useRef<HTMLInputElement>(null);
+	const [gameHeight, setGameHeight] = useState("100svh");
 	const [words, setWords] = useState<
 		{
 			english: string;
@@ -37,22 +37,22 @@ export default function TypingGame() {
 
 	useEffect(() => {
 		inputRef.current?.focus();
-  }, [showTranslation]);
-  
-  useEffect(() => {
-    const adjustHeight = () => {
-      const height = window.innerHeight;
-      setGameHeight(`${height}px`);
-    }
+	}, [showTranslation]);
 
-    adjustHeight();
+	const adjustHeight = () => {
+		const height = window.innerHeight;
+		setGameHeight(`${height}px`);
+	};
 
-    document.addEventListener('resize', adjustHeight);
+	useEffect(() => {
+		adjustHeight();
 
-    return () => {
-      document.removeEventListener('resize', adjustHeight);
-    }
-  }, []);
+		document.addEventListener("resize", adjustHeight);
+
+		return () => {
+			document.removeEventListener("resize", adjustHeight);
+		};
+	}, []);
 
 	const fetchWords = async () => {
 		const words = generate(5);
@@ -93,7 +93,8 @@ export default function TypingGame() {
 		fetchWords().then((data) => {
 			setWords(data);
 			setIsLoading(false);
-			inputRef.current?.focus();
+      inputRef.current?.focus();
+      adjustHeight();
 		});
 	}, []);
 
@@ -118,30 +119,35 @@ export default function TypingGame() {
 		);
 	}
 
-function renderFurigana(text: string) {
-  const parts = text.split(/[\[\]]/);
-  return parts.map((part, index) => {
-    if (index % 2 === 0) {
-      return part;
-    } else {
-      const readings = part.split("|");
-      const kanji = readings[0];
-      const furiganaParts = readings.slice(1);
-      const kanjiLengthPerFurigana = Math.floor(kanji.length / furiganaParts.length);
-      return furiganaParts.map((furigana, i) => {
-        const start = i * kanjiLengthPerFurigana;
-        const end = i === furiganaParts.length - 1 ? kanji.length : start + kanjiLengthPerFurigana;
-        const kanjiPart = kanji.slice(start, end);
-        return (
-          <ruby key={i}>
-            {kanjiPart}
-            <rt>{furigana}</rt>
-          </ruby>
-        );
-      });
-    }
-  });
-}
+	function renderFurigana(text: string) {
+		const parts = text.split(/[\[\]]/);
+		return parts.map((part, index) => {
+			if (index % 2 === 0) {
+				return part;
+			} else {
+				const readings = part.split("|");
+				const kanji = readings[0];
+				const furiganaParts = readings.slice(1);
+				const kanjiLengthPerFurigana = Math.floor(
+					kanji.length / furiganaParts.length
+				);
+				return furiganaParts.map((furigana, i) => {
+					const start = i * kanjiLengthPerFurigana;
+					const end =
+						i === furiganaParts.length - 1
+							? kanji.length
+							: start + kanjiLengthPerFurigana;
+					const kanjiPart = kanji.slice(start, end);
+					return (
+						<ruby key={i}>
+							{kanjiPart}
+							<rt>{furigana}</rt>
+						</ruby>
+					);
+				});
+			}
+		});
+	}
 
 	if (currentWordIndex >= words.length) {
 		return (
@@ -169,26 +175,26 @@ function renderFurigana(text: string) {
 
 	return (
 		<main
-      className="flex flex-col items-center justify-center h-[100svh] typing-text"
-      style={{height: gameHeight}}
+			className="flex flex-col items-center justify-center h-[100svh] typing-text"
+			style={{ height: gameHeight }}
 			onClick={() => inputRef.current?.focus()}>
 			{!showTranslation ? (
-					<p className="fixed">
-						{Array.from(inputValue).map((char, index) => {
-							const isCharCorrect =
-								words[currentWordIndex].english.charAt(index) === char;
-							return (
-								<span
-									key={index}
-									className={isCharCorrect ? "text-green-500" : "text-red-500"}>
-									{char}
-								</span>
-							);
-						})}
-						<span className="text-gray-500">
-							{words[currentWordIndex].english.substring(inputValue.length)}
-						</span>
-					</p>
+				<p className="fixed">
+					{Array.from(inputValue).map((char, index) => {
+						const isCharCorrect =
+							words[currentWordIndex].english.charAt(index) === char;
+						return (
+							<span
+								key={index}
+								className={isCharCorrect ? "text-green-500" : "text-red-500"}>
+								{char}
+							</span>
+						);
+					})}
+					<span className="text-gray-500">
+						{words[currentWordIndex].english.substring(inputValue.length)}
+					</span>
+				</p>
 			) : (
 				<p className="translation">
 					{words[currentWordIndex].japanese.kanji
@@ -203,8 +209,8 @@ function renderFurigana(text: string) {
 				onChange={handleInputChange}
 				onBlur={() => {
 					inputRef.current?.focus();
-        }}
-        autoFocus
+				}}
+				autoFocus
 			/>
 		</main>
 	);
