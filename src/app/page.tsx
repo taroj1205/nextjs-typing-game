@@ -7,9 +7,11 @@ export default function TypingGame() {
 	const [inputValue, setInputValue] = useState("");
 	const [showTranslation, setShowTranslation] = useState(false);
 	const [typedWords, setTypedWords] = useState<string[]>([]);
+	const [currentWord, setCurrentWord] = useState("");
 	const [isCorrect, setIsCorrect] = useState(0);
 	const inputRef = useRef<HTMLInputElement>(null);
 	const charRef = useRef<HTMLParagraphElement>(null);
+	const translationRef = useRef<HTMLParagraphElement>(null);
 	const [gameHeight, setGameHeight] = useState("100svh");
 	const [words, setWords] = useState<
 		{
@@ -18,12 +20,14 @@ export default function TypingGame() {
 		}[]
 	>([]);
 	const [isLoading, setIsLoading] = useState(true);
-const [startTime, setStartTime] = useState<Date | null>(null);
-const [endTime, setEndTime] = useState<Date | null>(null);
-const [totalCorrectChars, setTotalCorrectChars] = useState(0);
-const [totalChars, setTotalChars] = useState(0);
-	const [incorrectChars, setIncorrectChars] = useState<{ [key: string]: number }>({});
-	
+	const [startTime, setStartTime] = useState<Date | null>(null);
+	const [endTime, setEndTime] = useState<Date | null>(null);
+	const [totalCorrectChars, setTotalCorrectChars] = useState(0);
+	const [totalChars, setTotalChars] = useState(0);
+	const [incorrectChars, setIncorrectChars] = useState<{
+		[key: string]: number;
+	}>({});
+
 	useEffect(() => {
 		if (showTranslation) {
 			setTypedWords((prevWords) => [
@@ -112,6 +116,8 @@ const [totalChars, setTotalChars] = useState(0);
 				setStartTime(new Date());
 			}, 1000);
 			inputRef.current?.focus();
+			setCurrentWord(validTranslations[0].english);
+			resizeText();
 		});
 	}, []);
 
@@ -128,40 +134,32 @@ const [totalChars, setTotalChars] = useState(0);
 	const resizeText = () => {
 		if (charRef.current) {
 			const font = window.getComputedStyle(charRef.current).font;
-			const textWidth = getActualTextWidth(inputValue, font);
-			const containerWidth = window.innerWidth - 20;
-			const scaleFactor = containerWidth / textWidth;
-			charRef.current.style.transform = `scale(${
-				scaleFactor > 1 ? 1 : scaleFactor
-			})`;
+			console.log(currentWord)
+		const text = inputValue.length > 0 ? inputValue : currentWord;
+		const textWidth = getActualTextWidth(text, font);
+		const containerWidth = window.innerWidth - 20;
+		const scaleFactor = containerWidth / textWidth;
+		charRef.current.style.transform = `scale(${
+			scaleFactor > 1 ? 1 : scaleFactor
+		})`;
 		}
 	};
 
-	useLayoutEffect(() => {
+	useEffect(() => {
 		requestAnimationFrame(resizeText);
-	}, [inputValue]);
-
-	useLayoutEffect(() => {
-		requestAnimationFrame(resizeText);
-	}, [isLoading])
-
-	useLayoutEffect(() => {
-		requestAnimationFrame(resizeText);
-	}, [showTranslation]);
-
-	useLayoutEffect(() => {
-		requestAnimationFrame(resizeText);
-	}, []);
+	}, [inputValue, isLoading, showTranslation]);
 
 	const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
 		setInputValue(event.target.value);
 		const word = words[currentWordIndex].english;
 		if (word.startsWith(event.target.value)) {
 			setIsCorrect(1);
-			setTotalCorrectChars((prev) => prev + event.target.value.length);
-			setTotalChars((prev) => prev + word.length);
 			if (event.target.value === word) {
+				setTotalCorrectChars((prev) => prev + event.target.value.length);
 				setShowTranslation(true);
+				if (currentWordIndex < words.length - 1) {
+					setCurrentWord(words[currentWordIndex + 1].english);
+				}
 			}
 		} else {
 			setIsCorrect(2);
@@ -170,6 +168,7 @@ const [totalChars, setTotalChars] = useState(0);
 				return { ...prev, [lastChar]: (prev[lastChar] || 0) + 1 };
 			});
 		}
+		setTotalChars((prev) => prev + 1);
 	};
 
 	if (isLoading) {
@@ -212,15 +211,16 @@ const [totalChars, setTotalChars] = useState(0);
 	}
 
 	if (currentWordIndex >= words.length) {
-		    if (!endTime) {
-					setEndTime(new Date());
-				}
-		
-		    const timeTaken = endTime
-					? (endTime.getTime() - (startTime?.getTime() || 0)) / 1000
-					: 0;
-				const accuracy =
-					totalChars > 0 ? (totalCorrectChars / totalChars) * 100 : 0;
+		if (!endTime) {
+			setEndTime(new Date());
+		}
+
+		const timeTaken = endTime
+			? (endTime.getTime() - (startTime?.getTime() || 0)) / 1000
+			: 0;
+		const accuracy =
+			totalChars > 0 ? (totalCorrectChars / totalChars) * 100 : 0;
+
 		return (
 			<main className="flex flex-col items-center justify-center h-[100svh] bg-gray-100">
 				<h1 className="text-5xl mb-4 text-blue-500">Finished!</h1>
@@ -245,10 +245,16 @@ const [totalChars, setTotalChars] = useState(0);
 							))}
 						</tbody>
 					</table>
-					<p className="text-xl font-semibold">Time taken: {timeTaken} seconds</p>
-					<p className="text-xl font-semibold">Accuracy: {accuracy.toFixed(2)}%</p>
+					<p className="text-xl font-semibold">
+						Time taken: {timeTaken} seconds
+					</p>
+					<p className="text-xl font-semibold">
+						Accuracy: {accuracy.toFixed(2)}%
+					</p>
 					<div className="mt-4">
-						<h2 className="text-xl font-semibold mb-2">Incorrect characters:</h2>
+						<h2 className="text-xl font-semibold mb-2">
+							Incorrect characters:
+						</h2>
 						<ul className="list-disc list-inside">
 							{Object.entries(incorrectChars).map(([char, count], index) => (
 								<li key={index} className="text-lg font-medium">
@@ -276,54 +282,63 @@ const [totalChars, setTotalChars] = useState(0);
 			style={{ height: gameHeight }}
 			onClick={() => inputRef.current?.focus()}>
 			{!showTranslation ? (
-				<p
-					className="fixed flex flex-row items-center justify-center w-screen font-mono px-1"
-					ref={charRef}>
-					{Array.from(inputValue).map((char, index) => {
-						const isCharCorrect =
-							words[currentWordIndex].english.charAt(index) === char;
-						return (
-							<span
-								key={index}
-								className={isCharCorrect ? "text-green-500" : "text-red-500"}>
-								{isCharCorrect ? (
-									char
-								) : (
-									<div className="flex items-center flex-col">
-										<span className="z-10">{char}</span>
-										<span
-											className="ruby z-0 text-gray-500 absolute"
-											style={{ fontSize: "25%" }}>
-											{words[currentWordIndex].english.charAt(index)}
-										</span>
-									</div>
-								)}
-							</span>
-						);
-					})}
-					<span className="text-gray-500">
-						{words[currentWordIndex].english.substring(inputValue.length)}
-					</span>
-				</p>
+				<>
+					<p
+						onLoad={() => {
+							resizeText();
+						}}
+						className="flex flex-row items-center justify-center w-screen font-mono px-1"
+						ref={charRef}>
+						{Array.from(inputValue).map((char, index) => {
+							const isCharCorrect =
+								words[currentWordIndex].english.charAt(index) === char;
+							return (
+								<span
+									key={index}
+									className={isCharCorrect ? "text-green-500" : "text-red-500"}>
+									{isCharCorrect ? (
+										char
+									) : (
+										<div className="flex items-center flex-col">
+											<span className="z-10">{char}</span>
+											<span
+												className="ruby z-0 text-gray-500 absolute"
+												style={{ fontSize: "25%" }}>
+												{words[currentWordIndex].english.charAt(index)}
+											</span>
+										</div>
+									)}
+								</span>
+							);
+						})}
+						<span id="not-typed" className="text-gray-500">
+							{words[currentWordIndex].english.substring(inputValue.length)}
+						</span>
+					</p>
+					<div className="flex items-center justifycenter">
+						<input
+							ref={inputRef}
+							className="inset-0 z-0 absolute opacity-0 p-2 bg-transparent text-transparent"
+							value={inputValue}
+							onChange={handleInputChange}
+							onBlur={() => {
+								inputRef.current?.focus();
+							}}
+							type="password"
+							autoComplete="off"
+							autoCorrect="off"
+							spellCheck="false"
+							autoFocus
+						/>
+					</div>
+				</>
 			) : (
-				<p className="translation">
+				<p ref={translationRef} id="translation" className="translation">
 					{words[currentWordIndex].japanese.kanji
 						? renderFurigana(words[currentWordIndex].japanese.furigana)
 						: words[currentWordIndex].japanese.kana}
 				</p>
 			)}
-			<input
-				ref={inputRef}
-				className="inset-0 z-0 absolute opacity-0 p-2 bg-transparent text-transparent"
-				value={inputValue}
-				onChange={handleInputChange}
-				onBlur={() => {
-					inputRef.current?.focus();
-				}}
-				type="password"
-				autoComplete="off"
-				autoFocus
-			/>
 		</main>
 	);
 }
