@@ -40,61 +40,68 @@ export default function TypingGame() {
 	}, [showTranslation]);
 
 	const adjustHeight = () => {
-		const height = document.documentElement.clientHeight;
+		const height = window.innerHeight;
 		setGameHeight(`${height}px`);
 	};
 
 	useEffect(() => {
 		adjustHeight();
 
-		document.addEventListener("resize", adjustHeight);
+		window.addEventListener("resize", adjustHeight);
 
 		return () => {
-			document.removeEventListener("resize", adjustHeight);
+			window.removeEventListener("resize", adjustHeight);
 		};
 	}, []);
 
+	const getTranslation = async (word: string) => {
+		const response = await fetch("https://jotoba.de/api/search/words", {
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json",
+			},
+			body: JSON.stringify({
+				query: word,
+				language: "Japanese",
+				no_english: false,
+			}),
+		});
+		const data = await response.json();
+
+		if (data.words && data.words.length > 0) {
+			console.log(data.words[0].reading);
+			return {
+				english: word,
+				japanese: data.words[0].reading,
+			};
+		}
+
+		return {
+			english: word,
+			japanese: {},
+		};
+	};
+
 	const fetchWords = async () => {
 		const words = generate(5);
-		const translations = await Promise.all(
-			words.map(async (word) => {
-				const response = await fetch("https://jotoba.de/api/search/words", {
-					method: "POST",
-					headers: {
-						"Content-Type": "application/json",
-					},
-					body: JSON.stringify({
-						query: word,
-						language: "Japanese",
-						no_english: false,
-					}),
-				});
-				const data = await response.json();
-
-				if (data.words && data.words.length > 0) {
-					console.log(data.words[0].reading);
-					return {
-						english: word,
-						japanese: data.words[0].reading,
-					};
-				}
-
-				return {
-					english: word,
-					japanese: {},
-				};
-			})
-		);
-
+		const translations = [];
+		for (const word of words) {
+			let translation;
+			do {
+				translation = await getTranslation(word);
+			} while (!translation.japanese.kanji && !translation.japanese.kana);
+			translations.push(translation);
+		}
 		return translations;
 	};
 
 	useEffect(() => {
 		fetchWords().then((data) => {
-			setWords(data);
+			const validTranslations = data.filter(Boolean);
+			setWords(validTranslations);
 			setIsLoading(false);
-      inputRef.current?.focus();
-      adjustHeight();
+			inputRef.current?.focus();
+			adjustHeight();
 		});
 	}, []);
 
@@ -179,7 +186,7 @@ export default function TypingGame() {
 			style={{ height: gameHeight }}
 			onClick={() => inputRef.current?.focus()}>
 			{!showTranslation ? (
-				<p className="fixed w-screen px-1">
+				<p className="fixed flex flex-row flex-wrap items-center justify-center w-screen px-1">
 					{Array.from(inputValue).map((char, index) => {
 						const isCharCorrect =
 							words[currentWordIndex].english.charAt(index) === char;
@@ -187,7 +194,16 @@ export default function TypingGame() {
 							<span
 								key={index}
 								className={isCharCorrect ? "text-green-500" : "text-red-500"}>
-								{char}
+								{isCharCorrect ? (
+									char
+								) : (
+									<span className="flex flex-col">
+										<span className="z-10">{char}</span>
+										<span className="ruby z-0 text-gray-500 absolute ml-6 text-[25%] text-center">
+											{words[currentWordIndex].english.charAt(index)}
+										</span>
+									</span>
+								)}
 							</span>
 						);
 					})}
@@ -210,6 +226,8 @@ export default function TypingGame() {
 				onBlur={() => {
 					inputRef.current?.focus();
 				}}
+				type="password"
+				autoComplete="off"
 				autoFocus
 			/>
 		</main>
