@@ -162,7 +162,7 @@ export default function TypingGame() {
 
 	if (isLoading) {
 		return (
-			<main className="flex flex-col items-center justify-center h-[100svh]">
+			<main className="flex flex-col items-center justify-center h-[100svh] bg-gray-100 text-gray-800">
 				<h1 className="text-6xl mb-4">Typing Game</h1>
 				<h2 className="text-4xl mb-4">Loading...</h2>
 			</main>
@@ -201,9 +201,9 @@ export default function TypingGame() {
 
 	if (currentWordIndex >= words.length) {
 		return (
-			<main className="flex flex-col items-center justify-center h-[100svh]">
-				<h1 className="text-6xl mb-4">Finished!</h1>
-				<div className="mt-4">
+			<main className="flex flex-col items-center justify-center h-[100svh] bg-gray-100">
+				<h1 className="text-6xl mb-4 text-blue-500">Finished!</h1>
+				<div className="mt-4 bg-white text-gray-800 rounded-lg shadow-lg p-6 w-full max-w-md">
 					<ul>
 						{typedWords.map((word, index) => (
 							<li
@@ -219,13 +219,22 @@ export default function TypingGame() {
 						))}
 					</ul>
 				</div>
+				<button
+					className="mt-4 text-xl bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition duration-500 ease-in-out transform hover:-translate-y-1 hover:scale-110"
+					onClick={() => {
+						// reload page
+						window.location.reload();
+					}}
+				>
+					Play Again
+				</button>
 			</main>
 		);
 	}
 
 	return (
 		<main
-			className="flex flex-col items-center justify-center h-[100svh] w-screen typing-text"
+			className="flex flex-col items-center justify-center h-[100svh] w-screen typing-text bg-gray-100 text-gray-800"
 			style={{ height: gameHeight }}
 			onClick={() => inputRef.current?.focus()}>
 			{!showTranslation ? (
