@@ -153,10 +153,10 @@ function renderFurigana(text: string) {
 
 	return (
 		<main
-			className="flex flex-col items-center justify-center h-[100svh]"
+			className="flex flex-col items-center justify-center h-[100svh] typing-text"
 			onClick={() => inputRef.current?.focus()}>
 			{!showTranslation ? (
-					<p className="text-9xl fixed">
+					<p className="fixed">
 						{Array.from(inputValue).map((char, index) => {
 							const isCharCorrect =
 								words[currentWordIndex].english.charAt(index) === char;
@@ -173,7 +173,7 @@ function renderFurigana(text: string) {
 						</span>
 					</p>
 			) : (
-				<p className="text-9xl translation">
+				<p className="translation">
 					{words[currentWordIndex].japanese.kanji
 						? renderFurigana(words[currentWordIndex].japanese.furigana)
 						: words[currentWordIndex].japanese.kana}
