@@ -179,7 +179,7 @@ export default function TypingGame() {
 			style={{ height: gameHeight }}
 			onClick={() => inputRef.current?.focus()}>
 			{!showTranslation ? (
-				<p className="fixed w-screen">
+				<p className="fixed w-screen px-1">
 					{Array.from(inputValue).map((char, index) => {
 						const isCharCorrect =
 							words[currentWordIndex].english.charAt(index) === char;
