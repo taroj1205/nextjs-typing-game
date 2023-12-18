@@ -186,7 +186,7 @@ export default function TypingGame() {
 			style={{ height: gameHeight }}
 			onClick={() => inputRef.current?.focus()}>
 			{!showTranslation ? (
-				<p className="fixed flex flex-row flex-wrap items-center justify-center w-screen px-1">
+				<p className="fixed flex flex-row flex-wrap items-center justify-center w-screen font-mono px-1">
 					{Array.from(inputValue).map((char, index) => {
 						const isCharCorrect =
 							words[currentWordIndex].english.charAt(index) === char;
@@ -199,7 +199,7 @@ export default function TypingGame() {
 								) : (
 									<span className="flex flex-col">
 										<span className="z-10">{char}</span>
-										<span className="ruby z-0 text-gray-500 absolute translate-x-8 text-center" style={{ fontSize: "25%" }}>
+										<span className="ruby z-0 text-gray-500 absolute translate-x-6 text-center" style={{ fontSize: "25%" }}>
 											{words[currentWordIndex].english.charAt(index)}
 										</span>
 									</span>
