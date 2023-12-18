@@ -8,7 +8,8 @@ export default function TypingGame() {
 	const [showTranslation, setShowTranslation] = useState(false);
 	const [typedWords, setTypedWords] = useState<string[]>([]);
 	const [isCorrect, setIsCorrect] = useState(0);
-	const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [gameHeight, setGameHeight] = useState("100svh");
 	const [words, setWords] = useState<
 		{
 			english: string;
@@ -36,7 +37,22 @@ export default function TypingGame() {
 
 	useEffect(() => {
 		inputRef.current?.focus();
-	}, [showTranslation]);
+  }, [showTranslation]);
+  
+  useEffect(() => {
+    const adjustHeight = () => {
+      const height = window.innerHeight;
+      setGameHeight(`${height}px`);
+    }
+
+    adjustHeight();
+
+    document.addEventListener('resize', adjustHeight);
+
+    return () => {
+      document.removeEventListener('resize', adjustHeight);
+    }
+  }, []);
 
 	const fetchWords = async () => {
 		const words = generate(5);
@@ -153,7 +169,8 @@ function renderFurigana(text: string) {
 
 	return (
 		<main
-			className="flex flex-col items-center justify-center h-[100svh] typing-text"
+      className="flex flex-col items-center justify-center h-[100svh] typing-text"
+      style={{height: gameHeight}}
 			onClick={() => inputRef.current?.focus()}>
 			{!showTranslation ? (
 					<p className="fixed">
