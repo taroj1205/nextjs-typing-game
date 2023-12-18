@@ -1,6 +1,6 @@
 "use client";
 import { generate } from "random-words";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, use, useLayoutEffect } from "react";
 
 export default function TypingGame() {
 	const [currentWordIndex, setCurrentWordIndex] = useState(0);
@@ -9,6 +9,7 @@ export default function TypingGame() {
 	const [typedWords, setTypedWords] = useState<string[]>([]);
 	const [isCorrect, setIsCorrect] = useState(0);
 	const inputRef = useRef<HTMLInputElement>(null);
+	const charRef = useRef<HTMLParagraphElement>(null);
 	const [gameHeight, setGameHeight] = useState("100svh");
 	const [words, setWords] = useState<
 		{
@@ -42,6 +43,7 @@ export default function TypingGame() {
 	const adjustHeight = () => {
 		const height = window.innerHeight;
 		setGameHeight(`${height}px`);
+		requestAnimationFrame(resizeText);
 	};
 
 	useEffect(() => {
@@ -96,13 +98,53 @@ export default function TypingGame() {
 	};
 
 	useEffect(() => {
+		setIsLoading(true);
 		fetchWords().then((data) => {
 			const validTranslations = data.filter(Boolean);
 			setWords(validTranslations);
-			setIsLoading(false);
+			setTimeout(() => {
+				setIsLoading(false);
+			}, 1000);
 			inputRef.current?.focus();
-			adjustHeight();
 		});
+	}, []);
+
+	const getActualTextWidth = (text: string, font: string) => {
+		const element = document.createElement("span");
+		element.style.font = font;
+		element.textContent = text;
+		document.body.appendChild(element);
+		const width = element.offsetWidth;
+		document.body.removeChild(element);
+		return width;
+	};
+
+	const resizeText = () => {
+		if (charRef.current) {
+			const font = window.getComputedStyle(charRef.current).font;
+			const textWidth = getActualTextWidth(inputValue, font);
+			const containerWidth = window.innerWidth - 20;
+			const scaleFactor = containerWidth / textWidth;
+			charRef.current.style.transform = `scale(${
+				scaleFactor > 1 ? 1 : scaleFactor
+			})`;
+		}
+	};
+
+	useLayoutEffect(() => {
+		requestAnimationFrame(resizeText);
+	}, [inputValue]);
+
+	useLayoutEffect(() => {
+		requestAnimationFrame(resizeText);
+	}, [isLoading])
+
+	useLayoutEffect(() => {
+		requestAnimationFrame(resizeText);
+	}, [showTranslation]);
+
+	useLayoutEffect(() => {
+		requestAnimationFrame(resizeText);
 	}, []);
 
 	const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -121,7 +163,8 @@ export default function TypingGame() {
 	if (isLoading) {
 		return (
 			<main className="flex flex-col items-center justify-center h-[100svh]">
-				<h1 className="text-6xl mb-4">Loading...</h1>
+				<h1 className="text-6xl mb-4">Typing Game</h1>
+				<h2 className="text-4xl mb-4">Loading...</h2>
 			</main>
 		);
 	}
@@ -186,7 +229,9 @@ export default function TypingGame() {
 			style={{ height: gameHeight }}
 			onClick={() => inputRef.current?.focus()}>
 			{!showTranslation ? (
-				<p className="fixed flex flex-row flex-wrap items-center justify-center w-screen font-mono px-1">
+				<p
+					className="fixed flex flex-row items-center justify-center w-screen font-mono px-1"
+					ref={charRef}>
 					{Array.from(inputValue).map((char, index) => {
 						const isCharCorrect =
 							words[currentWordIndex].english.charAt(index) === char;
@@ -197,12 +242,14 @@ export default function TypingGame() {
 								{isCharCorrect ? (
 									char
 								) : (
-									<span className="flex flex-col">
+									<div className="flex items-center flex-col">
 										<span className="z-10">{char}</span>
-										<span className="ruby z-0 text-gray-500 absolute translate-x-6 text-center" style={{ fontSize: "25%" }}>
+										<span
+											className="ruby z-0 text-gray-500 absolute"
+											style={{ fontSize: "25%" }}>
 											{words[currentWordIndex].english.charAt(index)}
 										</span>
-									</span>
+									</div>
 								)}
 							</span>
 						);
@@ -220,7 +267,7 @@ export default function TypingGame() {
 			)}
 			<input
 				ref={inputRef}
-				className="inset-0 absolute opacity-0 p-2 bg-transparent text-transparent"
+				className="inset-0 z-0 absolute opacity-0 p-2 bg-transparent text-transparent"
 				value={inputValue}
 				onChange={handleInputChange}
 				onBlur={() => {
