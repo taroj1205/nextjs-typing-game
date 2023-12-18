@@ -18,7 +18,12 @@ export default function TypingGame() {
 		}[]
 	>([]);
 	const [isLoading, setIsLoading] = useState(true);
-
+const [startTime, setStartTime] = useState<Date | null>(null);
+const [endTime, setEndTime] = useState<Date | null>(null);
+const [totalCorrectChars, setTotalCorrectChars] = useState(0);
+const [totalChars, setTotalChars] = useState(0);
+	const [incorrectChars, setIncorrectChars] = useState<{ [key: string]: number }>({});
+	
 	useEffect(() => {
 		if (showTranslation) {
 			setTypedWords((prevWords) => [
@@ -104,6 +109,7 @@ export default function TypingGame() {
 			setWords(validTranslations);
 			setTimeout(() => {
 				setIsLoading(false);
+				setStartTime(new Date());
 			}, 1000);
 			inputRef.current?.focus();
 		});
@@ -149,20 +155,26 @@ export default function TypingGame() {
 
 	const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
 		setInputValue(event.target.value);
-		if (words[currentWordIndex].english.startsWith(event.target.value)) {
+		const word = words[currentWordIndex].english;
+		if (word.startsWith(event.target.value)) {
 			setIsCorrect(1);
-			if (event.target.value === words[currentWordIndex].english) {
-				console.log(words[currentWordIndex].japanese);
+			setTotalCorrectChars((prev) => prev + event.target.value.length);
+			setTotalChars((prev) => prev + word.length);
+			if (event.target.value === word) {
 				setShowTranslation(true);
 			}
 		} else {
 			setIsCorrect(2);
+			setIncorrectChars((prev) => {
+				const lastChar = event.target.value[event.target.value.length - 1];
+				return { ...prev, [lastChar]: (prev[lastChar] || 0) + 1 };
+			});
 		}
 	};
 
 	if (isLoading) {
 		return (
-			<main className="flex flex-col items-center justify-center h-[100svh] bg-gray-100 text-gray-800">
+			<main className="auto-resize flex flex-col items-center justify-center h-[100svh] bg-gray-100 text-gray-800">
 				<h1 className="text-6xl mb-4">Typing Game</h1>
 				<h2 className="text-4xl mb-4">Loading...</h2>
 			</main>
@@ -200,32 +212,58 @@ export default function TypingGame() {
 	}
 
 	if (currentWordIndex >= words.length) {
+		    if (!endTime) {
+					setEndTime(new Date());
+				}
+		
+		    const timeTaken = endTime
+					? (endTime.getTime() - (startTime?.getTime() || 0)) / 1000
+					: 0;
+				const accuracy =
+					totalChars > 0 ? (totalCorrectChars / totalChars) * 100 : 0;
 		return (
 			<main className="flex flex-col items-center justify-center h-[100svh] bg-gray-100">
-				<h1 className="text-6xl mb-4 text-blue-500">Finished!</h1>
-				<div className="mt-4 bg-white text-gray-800 rounded-lg shadow-lg p-6 w-full max-w-md">
-					<ul>
-						{typedWords.map((word, index) => (
-							<li
-								key={index}
-								className={
-									words[index].japanese.furigana ? "text-4xl" : "mt-2 text-4xl"
-								}>
-								{word}:{" "}
-								{words[index].japanese.kanji
-									? renderFurigana(words[index].japanese.furigana)
-									: words[index].japanese.kana}
-							</li>
-						))}
-					</ul>
+				<h1 className="text-5xl mb-4 text-blue-500">Finished!</h1>
+				<div className="mt-4 flex flex-col space-y-2 bg-white text-gray-800 rounded-lg shadow-lg p-6 w-full max-w-md">
+					<table className="table-auto">
+						<thead>
+							<tr>
+								<th className="px-4 py-2 text-lg">Typed Word</th>
+								<th className="px-4 py-2 text-lg">Translation</th>
+							</tr>
+						</thead>
+						<tbody>
+							{typedWords.map((word, index) => (
+								<tr key={index}>
+									<td className="border px-4 py-2 text-md">{word}</td>
+									<td className="border px-4 py-2 text-md">
+										{words[index].japanese.kanji
+											? renderFurigana(words[index].japanese.furigana)
+											: words[index].japanese.kana}
+									</td>
+								</tr>
+							))}
+						</tbody>
+					</table>
+					<p className="text-xl font-semibold">Time taken: {timeTaken} seconds</p>
+					<p className="text-xl font-semibold">Accuracy: {accuracy.toFixed(2)}%</p>
+					<div className="mt-4">
+						<h2 className="text-xl font-semibold mb-2">Incorrect characters:</h2>
+						<ul className="list-disc list-inside">
+							{Object.entries(incorrectChars).map(([char, count], index) => (
+								<li key={index} className="text-lg font-medium">
+									{char}: {count}
+								</li>
+							))}
+						</ul>
+					</div>
 				</div>
 				<button
-					className="mt-4 text-xl bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition duration-500 ease-in-out transform hover:-translate-y-1 hover:scale-110"
+					className="mt-4 text-lg bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition duration-500 ease-in-out transform hover:-translate-y-1 hover:scale-110"
 					onClick={() => {
 						// reload page
 						window.location.reload();
-					}}
-				>
+					}}>
 					Play Again
 				</button>
 			</main>
@@ -234,7 +272,7 @@ export default function TypingGame() {
 
 	return (
 		<main
-			className="flex flex-col items-center justify-center h-[100svh] w-screen typing-text bg-gray-100 text-gray-800"
+			className="auto-resize flex flex-col items-center justify-center h-[100svh] w-screen typing-text bg-gray-100 text-gray-800"
 			style={{ height: gameHeight }}
 			onClick={() => inputRef.current?.focus()}>
 			{!showTranslation ? (
