@@ -96,7 +96,7 @@ export default function TypingGame() {
 
 	if (isLoading) {
 		return (
-			<main className="flex flex-col items-center justify-center h-screen">
+			<main className="flex flex-col items-center justify-center h-[100svh]">
 				<h1 className="text-6xl mb-4">Loading...</h1>
 			</main>
 		);
@@ -129,7 +129,7 @@ function renderFurigana(text: string) {
 
 	if (currentWordIndex >= words.length) {
 		return (
-			<main className="flex flex-col items-center justify-center h-screen">
+			<main className="flex flex-col items-center justify-center h-[100svh]">
 				<h1 className="text-6xl mb-4">Finished!</h1>
 				<div className="mt-4">
 					<ul>
@@ -153,11 +153,10 @@ function renderFurigana(text: string) {
 
 	return (
 		<main
-			className="flex flex-col items-center justify-center h-screen"
+			className="flex flex-col items-center justify-center h-[100svh]"
 			onClick={() => inputRef.current?.focus()}>
 			{!showTranslation ? (
-				<>
-					<p className="text-9xl mb-4">
+					<p className="text-9xl fixed">
 						{Array.from(inputValue).map((char, index) => {
 							const isCharCorrect =
 								words[currentWordIndex].english.charAt(index) === char;
@@ -173,9 +172,8 @@ function renderFurigana(text: string) {
 							{words[currentWordIndex].english.substring(inputValue.length)}
 						</span>
 					</p>
-				</>
 			) : (
-				<p className="text-9xl mb-4 translation">
+				<p className="text-9xl translation">
 					{words[currentWordIndex].japanese.kanji
 						? renderFurigana(words[currentWordIndex].japanese.furigana)
 						: words[currentWordIndex].japanese.kana}
