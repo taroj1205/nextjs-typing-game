@@ -40,7 +40,7 @@ export default function TypingGame() {
 	}, [showTranslation]);
 
 	const adjustHeight = () => {
-		const height = window.innerHeight;
+		const height = document.documentElement.clientHeight;
 		setGameHeight(`${height}px`);
 	};
 
