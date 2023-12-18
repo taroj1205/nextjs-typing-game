@@ -199,7 +199,7 @@ export default function TypingGame() {
 								) : (
 									<span className="flex flex-col">
 										<span className="z-10">{char}</span>
-										<span className="ruby z-0 text-gray-500 absolute ml-6 text-[25%] text-center">
+										<span className="ruby z-0 text-gray-500 absolute translate-x-8 text-center" style={{ fontSize: "25%" }}>
 											{words[currentWordIndex].english.charAt(index)}
 										</span>
 									</span>
