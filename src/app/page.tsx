@@ -134,14 +134,14 @@ export default function TypingGame() {
 	const resizeText = () => {
 		if (charRef.current) {
 			const font = window.getComputedStyle(charRef.current).font;
-			console.log(currentWord)
-		const text = inputValue.length > 0 ? inputValue : currentWord;
-		const textWidth = getActualTextWidth(text, font);
-		const containerWidth = window.innerWidth - 20;
-		const scaleFactor = containerWidth / textWidth;
-		charRef.current.style.transform = `scale(${
-			scaleFactor > 1 ? 1 : scaleFactor
-		})`;
+			console.log(currentWord);
+			const text = inputValue.length > 0 ? inputValue : currentWord;
+			const textWidth = getActualTextWidth(text, font);
+			const containerWidth = window.innerWidth - 20;
+			const scaleFactor = containerWidth / textWidth;
+			charRef.current.style.transform = `scale(${
+				scaleFactor > 1 ? 1 : scaleFactor
+			})`;
 		}
 	};
 
@@ -221,6 +221,20 @@ export default function TypingGame() {
 		const accuracy =
 			totalChars > 0 ? (totalCorrectChars / totalChars) * 100 : 0;
 
+		const accuracyColor: { [key: string]: string } = {
+			100: "bg-green-700",
+			90: "bg-green-600",
+			80: "bg-green-500",
+			70: "bg-green-400",
+			60: "bg-green-300",
+			50: "bg-yellow-300",
+			40: "bg-yellow-400",
+			30: "bg-yellow-500",
+			20: "bg-red-300",
+			10: "bg-red-400",
+			0: "bg-red-500",
+		};
+
 		return (
 			<main className="flex flex-col items-center justify-center h-[100svh] bg-gray-100">
 				<h1 className="text-5xl mb-4 text-blue-500">Finished!</h1>
@@ -228,15 +242,17 @@ export default function TypingGame() {
 					<table className="table-auto">
 						<thead>
 							<tr>
-								<th className="px-4 py-2 text-lg">Typed Word</th>
-								<th className="px-4 py-2 text-lg">Translation</th>
+								<th className="px-4 py-2 text-lg text-right">Typed Word</th>
+								<th className="px-4 py-2 text-lg text-left">Translation</th>
 							</tr>
 						</thead>
 						<tbody>
 							{typedWords.map((word, index) => (
 								<tr key={index}>
-									<td className="border px-4 py-2 text-md">{word}</td>
-									<td className="border px-4 py-2 text-md">
+									<td className="border px-4 py-2 text-lg text-right">
+										{word}
+									</td>
+									<td className="border px-4 py-2 text-lg text-left">
 										{words[index].japanese.kanji
 											? renderFurigana(words[index].japanese.furigana)
 											: words[index].japanese.kana}
@@ -246,22 +262,35 @@ export default function TypingGame() {
 						</tbody>
 					</table>
 					<p className="text-xl font-semibold">
-						Time taken: {timeTaken} seconds
+						Time taken: <span>{timeTaken} seconds</span>
 					</p>
 					<p className="text-xl font-semibold">
-						Accuracy: {accuracy.toFixed(2)}%
+						Accuracy:{" "}
+						<span className={accuracyColor[Math.round(accuracy / 10) * 10]}>
+							{accuracy.toFixed(2)}%
+						</span>
 					</p>
 					<div className="mt-4">
-						<h2 className="text-xl font-semibold mb-2">
-							Incorrect characters:
-						</h2>
-						<ul className="list-disc list-inside">
-							{Object.entries(incorrectChars).map(([char, count], index) => (
-								<li key={index} className="text-lg font-medium">
-									{char}: {count}
-								</li>
-							))}
-						</ul>
+						{Object.entries(incorrectChars).length > 0 ? (
+							<>
+								<h2 className="text-xl font-semibold mb-2">
+									Incorrect characters:
+								</h2>
+								<ul className="list-disc list-inside">
+									{Object.entries(incorrectChars).map(
+										([char, count], index) => (
+											<li key={index} className="text-lg font-medium">
+												{char}: {count}
+											</li>
+										)
+									)}
+								</ul>
+							</>
+						) : (
+							<h2 className="text-xl font-semibold bg-clip-text text-transparent bg-gradient-to-r from-red-500 via-yellow-500 to-green-500">
+								Congratulations! You got all the words correct!
+							</h2>
+						)}
 					</div>
 				</div>
 				<button
@@ -324,7 +353,6 @@ export default function TypingGame() {
 							onBlur={() => {
 								inputRef.current?.focus();
 							}}
-							type="password"
 							autoComplete="off"
 							autoCorrect="off"
 							spellCheck="false"
