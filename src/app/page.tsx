@@ -175,11 +175,11 @@ export default function TypingGame() {
 
 	return (
 		<main
-			className="flex flex-col items-center justify-center h-[100svh] typing-text"
+			className="flex flex-col items-center justify-center h-[100svh] w-screen typing-text"
 			style={{ height: gameHeight }}
 			onClick={() => inputRef.current?.focus()}>
 			{!showTranslation ? (
-				<p className="fixed">
+				<p className="fixed w-screen">
 					{Array.from(inputValue).map((char, index) => {
 						const isCharCorrect =
 							words[currentWordIndex].english.charAt(index) === char;
