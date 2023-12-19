@@ -438,13 +438,7 @@ export default function TypingGame() {
 						}}>
 						Play Again
 					</button>
-					{isLoaded && !userId ? (
-						<SignInButton>
-							<button className="text-lg bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded transition duration-300 ease-in-out shadow-lg">
-								Sign In to Save
-							</button>
-						</SignInButton>
-					) : (
+					{isLoaded && userId ? (
 						<>
 							<button
 								className="text-lg bg-indigo-500 hover:bg-indigo-700 disabled:bg-indigo-300 text-white font-bold py-2 px-4 rounded transition duration-300 ease-in-out shadow-lg"
@@ -464,6 +458,12 @@ export default function TypingGame() {
 								Go to Dashboard
 							</Link>
 						</>
+					) : (
+						<SignInButton>
+							<button className="text-lg bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded transition duration-300 ease-in-out shadow-lg">
+								Sign In to Save
+							</button>
+						</SignInButton>
 					)}
 				</div>
 			</main>
@@ -540,7 +540,6 @@ export default function TypingGame() {
 		</main>
 	);
 }
-
 
 interface WordTooltipProps {
 	word: string;
