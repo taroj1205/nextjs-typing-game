@@ -76,6 +76,7 @@ export default function TypingGame() {
 	const [isSaving, setIsSaving] = useState(0);
 	const [missTypedLetters, setMissTypedLetters] = useState<string[]>([]);
 	const stopwatch = useRef(new Stopwatch());
+	const [showWrong, setShowWrong] = useState(false);
 
 	useEffect(() => {
 		if (showTranslation) {
@@ -296,10 +297,14 @@ export default function TypingGame() {
 				startTime.getTime() + stopwatch.current.duration * 1000
 			);
 		const timeTaken = stopwatch.current.duration;
-		const totalMistypedLetters = Object.values(missTypedLetters).reduce(
-			(total, current) => total + Object.keys(current).length,
-			0
-		);
+		console.log(missTypedLetters);
+		let totalMistypedLetters = 0;
+		if (missTypedLetters) {
+			totalMistypedLetters = Object.values(missTypedLetters).reduce(
+				(total, current) => total + (current ? Object.keys(current).length : 0),
+				0
+			);
+		}
 
 		const accuracy =
 			totalChars > 0
@@ -314,7 +319,7 @@ export default function TypingGame() {
 					{
 						user_id: userId,
 						time_taken: timeTaken,
-						accuracy: accuracy,
+						accuracy,
 						misstyped_letters: missTypedLetters,
 						words,
 						start_time: startTime,
@@ -348,6 +353,11 @@ export default function TypingGame() {
 			0: "bg-red-500",
 		};
 
+		const wrongLetterTotal = missTypedLetters.reduce(
+			(total, current) => total + (current ? Object.keys(current).length : 0),
+			0
+		);
+
 		return (
 			<main className="flex flex-col items-center justify-center h-[100svh] bg-gray-100">
 				<h1 className="text-5xl mb-4 text-blue-500">Finished!</h1>
@@ -355,7 +365,14 @@ export default function TypingGame() {
 					<table className="table-auto">
 						<thead>
 							<tr>
-								<th className="px-4 py-2 text-lg text-right">Typed Word</th>
+								<th className="px-4 py-2 text-lg text-right flex flex-row items-center justify-end">
+									Typed Word{" "}
+									<input
+										type="checkbox"
+										checked={showWrong}
+										onChange={() => setShowWrong(!showWrong)}
+									/>
+								</th>
 								<th className="px-4 py-2 text-lg text-left">Translation</th>
 							</tr>
 						</thead>
@@ -363,7 +380,14 @@ export default function TypingGame() {
 							{typedWords.map((word, index) => (
 								<tr key={index}>
 									<td className="border px-4 py-2 text-lg text-right">
-										{word}
+										{showWrong ? (
+											<WordTooltip
+												word={word}
+												misstypedLetters={missTypedLetters[index]}
+											/>
+										) : (
+											word
+										)}
 									</td>
 									<td className="border px-4 py-2 text-lg text-left">
 										{words[index].japanese.kanji
@@ -385,29 +409,19 @@ export default function TypingGame() {
 					</p>
 					<div className="mt-4">
 						{Object.entries(missTypedLetters).length > 0 ? (
-							<>
-								<h2 className="text-xl font-semibold mb-2">
-									Incorrect characters:
-								</h2>
-								<ul className="list-disc list-inside">
-									{Object.entries(missTypedLetters).map(
-										([wordIndex, chars], index) => (
-											<li key={index} className="text-lg font-medium">
-												{Object.entries(chars).map(([charIndex, char]) => (
-													<span key={charIndex}>
-														Mistyped: {char}, Correct:{" "}
-														{
-															words[Number(wordIndex)].english[
-																Number(charIndex)
-															]
-														}
-													</span>
-												))}
-											</li>
-										)
-									)}
-								</ul>
-							</>
+							<div className="text-xl font-semibold mb-2 flex flex-row items-center">
+								Incorrect characters:
+								<div className="flex flex-col ml-2">
+									<span className="text-center">{wrongLetterTotal}</span>
+									<hr className="border-gray-800" />
+									<span className="text-center">
+										{words.reduce(
+											(total, word) => total + word.english.length,
+											0
+										) + wrongLetterTotal}
+									</span>
+								</div>
+							</div>
 						) : (
 							<h2 className="text-xl font-semibold bg-clip-text text-transparent bg-gradient-to-r from-red-500 via-yellow-500 to-green-500">
 								Congratulations! You got all the words correct!
@@ -526,3 +540,27 @@ export default function TypingGame() {
 		</main>
 	);
 }
+
+
+interface WordTooltipProps {
+	word: string;
+	misstypedLetters: string;
+}
+
+const WordTooltip: React.FC<WordTooltipProps> = ({
+	word,
+	misstypedLetters,
+}) => {
+	return (
+		word &&
+		word.split("").map((letter, index) => (
+			<span
+				key={index}
+				style={{
+					color: misstypedLetters && misstypedLetters[index] ? "red" : "green",
+				}}>
+				{letter}
+			</span>
+		))
+	);
+};
