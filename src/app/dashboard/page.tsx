@@ -118,7 +118,7 @@ export default function Dashboard() {
 								<Line
 									type="monotone"
 									dataKey="words.length"
-									stroke="#8884d8"
+									stroke="#ff0000"
 									name="Words"
 								/>
 							</LineChart>
