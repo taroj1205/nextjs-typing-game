@@ -27,7 +27,7 @@ export default function RootLayout({
 			afterSignInUrl={"/game"}
 			afterSignUpUrl={"/game"}>
 			<html lang="en">
-				<body className={`${inter.className} bg-[#f5f5f5]`}>
+				<body className={`${inter.className} bg-[#f5f5f5] max-w-[100svw]`}>
 					{children}
 					<Analytics />
 				</body>

@@ -63,9 +63,15 @@ export default function Dashboard() {
 					console.log("Accuracy for stat", stat.id, ":", stat.accuracy);
 					return {
 						...stat,
-						created_at: new Date(stat.created_at).toLocaleString(),
+						created_at: new Date(stat.created_at).toLocaleString(undefined, {
+							year: "numeric",
+							month: "2-digit",
+							day: "2-digit",
+							hour: "2-digit",
+							minute: "2-digit",
+							hour12: false,
+						}),
 						accuracy: parseFloat(stat.accuracy.toFixed(2)),
-						date: new Date(stat.created_at).toLocaleDateString(),
 						words: stat.words.map((word: Word, index: number) => ({
 							...word,
 							misstypedLetters: stat.misstyped_letters
@@ -81,19 +87,50 @@ export default function Dashboard() {
 		}
 	};
 
-	const uniqueDates = Array.from(new Set(stats.map((stat) => stat.date)));
+	const uniqueDates = Array.from(new Set(stats.map((stat) => stat.created_at)));
+
+	// Group stats by date and calculate total words for each date
+	const totalWordsPerDay = stats.reduce(
+		(acc: { [key: string]: number }, stat) => {
+			console.log(stat.created_at);
+			const [day, month, year] = stat.created_at.split("/");
+			const date = new Date(
+				`${year.split(",")[0]}-${month}-${day}`
+			).toISOString();
+
+			console.log(date, day, month, year.split(",")[0]);
+			const totalWords = stat.words ? stat.words.length : 0;
+
+			if (acc[date]) {
+				acc[date] += totalWords;
+			} else {
+				acc[date] = totalWords;
+			}
+
+			return acc;
+		},
+		{}
+	);
+
+	// Convert the totalWordsPerDay object to an array
+	const totalWordsPerDayArray = Object.entries(totalWordsPerDay).map(
+		([date, totalWords]) => ({
+			date: new Date(date).toLocaleDateString(),
+			totalWords,
+		})
+	);
 
 	return (
 		<>
 			<Navbar />
-			<div className="p-4">
+			<div className="p-4 flex flex-col items-center max-w-[100svw]">
 				<div className="flex flex-col items-center">
 					<h2 className="text-4xl font-bold mb-4">Dashboard</h2>
 				</div>
 				{stats.length > 0 ? (
-					<div className="flex flex-col items-center justify-center space-y-2">
+					<div className="flex flex-col items-center justify-center max-w-[90svw] space-y-2">
 						<StatsSummary stats={stats} />
-						<div className="flex flex-row flex-wrap space-x-2 items-center justify-center">
+						<div className="flex flex-col space-y-2 items-center justify-center">
 							<LineChart
 								width={Math.min(600, window.innerWidth - 40)}
 								height={300}
@@ -115,11 +152,21 @@ export default function Dashboard() {
 									stroke="#82ca9d"
 									name="Accuracy (%)"
 								/>
+							</LineChart>
+							<LineChart
+								width={Math.min(600, window.innerWidth - 40)}
+								height={300}
+								data={totalWordsPerDayArray}>
+								<CartesianGrid strokeDasharray="3 3" />
+								<XAxis dataKey="date" ticks={uniqueDates} />
+								<YAxis />
+								<Tooltip />
+								<Legend />
 								<Line
 									type="monotone"
-									dataKey="words.length"
+									dataKey="totalWords"
 									stroke="#ff0000"
-									name="Words"
+									name="Total Words"
 								/>
 							</LineChart>
 						</div>
@@ -219,7 +266,7 @@ const WordsHistory = ({ stats }: { stats: Stats[] }) => {
 		});
 	}
 	return (
-		<div className="container mx-auto px-4 max-w-[600px]">
+		<div className="flex items-center flex-col px-4 w-full max-w-[600px]">
 			<div className="flex items-center justify-center bg-gray-200 p-4 rounded-md my-4">
 				<input
 					type="text"
@@ -327,7 +374,7 @@ const Loading = () => {
 					.map((_, i) => (
 						<div
 							key={i}
-							className="w-[600px] h-[300px] bg-gray-200 animate-pulse"></div>
+							className="w-[600px] max-w-[90svw] h-[300px] bg-gray-200 animate-pulse"></div>
 					))}
 			</div>
 
