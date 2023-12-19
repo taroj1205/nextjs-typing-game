@@ -6,7 +6,14 @@ import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { generate } from "random-words";
-import { useState, useEffect, useRef, use, useLayoutEffect } from "react";
+import {
+	useState,
+	useEffect,
+	useRef,
+	use,
+	useLayoutEffect,
+	useCallback,
+} from "react";
 
 class Stopwatch {
 	private startTime: Date | null = null;
@@ -91,11 +98,25 @@ export default function TypingGame() {
 		inputRef.current?.focus();
 	}, [showTranslation]);
 
-	const adjustHeight = () => {
+	const resizeText = useCallback(() => {
+		if (charRef.current) {
+			const font = window.getComputedStyle(charRef.current).font;
+			console.log(currentWord);
+			const text = inputValue.length > 0 ? inputValue : currentWord;
+			const textWidth = getActualTextWidth(text, font);
+			const containerWidth = window.innerWidth - 20;
+			const scaleFactor = containerWidth / textWidth;
+			charRef.current.style.transform = `scale(${
+				scaleFactor > 1 ? 1 : scaleFactor
+			})`;
+		}
+	}, [inputValue, isLoading, showTranslation, currentWord]);
+
+	const adjustHeight = useCallback(() => {
 		const height = window.innerHeight;
 		setGameHeight(`${height}px`);
 		requestAnimationFrame(resizeText);
-	};
+	}, [resizeText]);
 
 	useEffect(() => {
 		adjustHeight();
@@ -105,7 +126,7 @@ export default function TypingGame() {
 		return () => {
 			window.removeEventListener("resize", adjustHeight);
 		};
-	}, []);
+	}, [adjustHeight]);
 
 	const getTranslation = async (word: string) => {
 		const response = await fetch("https://jotoba.de/api/search/words", {
@@ -173,23 +194,9 @@ export default function TypingGame() {
 		return width;
 	};
 
-	const resizeText = () => {
-		if (charRef.current) {
-			const font = window.getComputedStyle(charRef.current).font;
-			console.log(currentWord);
-			const text = inputValue.length > 0 ? inputValue : currentWord;
-			const textWidth = getActualTextWidth(text, font);
-			const containerWidth = window.innerWidth - 20;
-			const scaleFactor = containerWidth / textWidth;
-			charRef.current.style.transform = `scale(${
-				scaleFactor > 1 ? 1 : scaleFactor
-			})`;
-		}
-	};
-
 	useEffect(() => {
 		requestAnimationFrame(resizeText);
-	}, [inputValue, isLoading, showTranslation]);
+	}, [resizeText]);
 
 	const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
 		setInputValue(event.target.value);
@@ -341,8 +348,6 @@ export default function TypingGame() {
 			0: "bg-red-500",
 		};
 
-		const pathname = usePathname();
-
 		return (
 			<main className="flex flex-col items-center justify-center h-[100svh] bg-gray-100">
 				<h1 className="text-5xl mb-4 text-blue-500">Finished!</h1>
@@ -385,20 +390,22 @@ export default function TypingGame() {
 									Incorrect characters:
 								</h2>
 								<ul className="list-disc list-inside">
-									{Object.entries(missTypedLetters).map(([wordIndex, chars], index) => (
-										<li key={index} className="text-lg font-medium">
-											{Object.entries(chars).map(([charIndex, char]) => (
-												<span key={charIndex}>
-													Mistyped: {char}, Correct:{" "}
-													{
-														words[Number(wordIndex)].english[
-															Number(charIndex)
-														]
-													}
-												</span>
-											))}
-										</li>
-									))}
+									{Object.entries(missTypedLetters).map(
+										([wordIndex, chars], index) => (
+											<li key={index} className="text-lg font-medium">
+												{Object.entries(chars).map(([charIndex, char]) => (
+													<span key={charIndex}>
+														Mistyped: {char}, Correct:{" "}
+														{
+															words[Number(wordIndex)].english[
+																Number(charIndex)
+															]
+														}
+													</span>
+												))}
+											</li>
+										)
+									)}
 								</ul>
 							</>
 						) : (
@@ -418,7 +425,7 @@ export default function TypingGame() {
 						Play Again
 					</button>
 					{isLoaded && !userId ? (
-						<SignInButton afterSignInUrl={pathname + "/game"}>
+						<SignInButton>
 							<button className="text-lg bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded transition duration-300 ease-in-out shadow-lg">
 								Sign In to Save
 							</button>

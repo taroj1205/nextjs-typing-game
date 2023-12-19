@@ -44,19 +44,6 @@ export default function Dashboard() {
 	const [stats, setStats] = useState<Stats[]>([]);
 	const [loadingStats, setLoadingStats] = useState(true);
 	const { isLoaded, userId } = useAuth();
-	const [windowWidth, setWindowWidth] = useState(window.innerWidth);
-
-	useEffect(() => {
-		const handleResize = () => {
-			setWindowWidth(window.innerWidth);
-		};
-
-		window.addEventListener("resize", handleResize);
-
-		return () => {
-			window.removeEventListener("resize", handleResize);
-		};
-	}, []);
 
 	useEffect(() => {
 		if (!isLoaded) return;
@@ -108,7 +95,7 @@ export default function Dashboard() {
 						<StatsSummary stats={stats} />
 						<div className="flex flex-row flex-wrap space-x-2 items-center justify-center">
 							<LineChart
-								width={Math.min(600, windowWidth - 40)}
+								width={Math.min(600, window.innerWidth - 40)}
 								height={300}
 								data={stats}>
 								<CartesianGrid strokeDasharray="3 3" />
@@ -153,8 +140,8 @@ export default function Dashboard() {
 const WordsHistory = ({ stats }: { stats: Stats[] }) => {
 	const [searchTerm, setSearchTerm] = useState("");
 	const order = ["none", "asc", "desc"];
-  const [sortOrder, setSortOrder] = useState(order[0]);
-  const [showWrong, setShowWrong] = useState(false);
+	const [sortOrder, setSortOrder] = useState(order[0]);
+	const [showWrong, setShowWrong] = useState(false);
 
 	const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
 		setSearchTerm(event.target.value);
@@ -247,14 +234,25 @@ const WordsHistory = ({ stats }: { stats: Stats[] }) => {
 					<tr>
 						<th className="px-4 py-2 text-lg text-right flex flex-row items-center justify-end">
 							Typed Word{" "}
-							<button className="w-4 h-4 ml-2 p-2 flex items-center justify-center" onClick={handleSortClick}>
-								{sortOrder === order[1]
-									? "▲"
-									: sortOrder === order[2]
-									? "▼"
-									: <div className="flex flex-col text-[0.5rem] leading-3"><span>▲</span><span>▼</span></div>}
-              </button>
-              <input type="checkbox" checked={showWrong} onChange={() => setShowWrong(!showWrong)} />
+							<button
+								className="w-4 h-4 ml-2 p-2 flex items-center justify-center"
+								onClick={handleSortClick}>
+								{sortOrder === order[1] ? (
+									"▲"
+								) : sortOrder === order[2] ? (
+									"▼"
+								) : (
+									<div className="flex flex-col text-[0.5rem] leading-3">
+										<span>▲</span>
+										<span>▼</span>
+									</div>
+								)}
+							</button>
+							<input
+								type="checkbox"
+								checked={showWrong}
+								onChange={() => setShowWrong(!showWrong)}
+							/>
 						</th>
 						<th className="px-4 py-2 text-lg text-left">Translation</th>
 					</tr>
@@ -311,32 +309,10 @@ const StatsSummary = ({ stats }: { stats: Stats[] }) => {
 	);
 	const averageAccuracy = totalAccuracy / stats.length;
 
-	const letterCounts: { [key: string]: number } = {};
-	stats.forEach((stat) => {
-		if (stat.misstyped_letters) {
-			stat.misstyped_letters.forEach((letterObj: { [key: string]: string }) => {
-				if (letterObj) {
-					const letter = Object.values(letterObj)[0] as string;
-					if (letterCounts[letter]) {
-						letterCounts[letter]++;
-					} else {
-						letterCounts[letter] = 1;
-					}
-				}
-			});
-		}
-	});
-	const topMistakenLetters = Object.entries(letterCounts)
-		.sort((a, b) => b[1] - a[1])
-		.slice(0, 5)
-		.map((entry) => entry[0]);
-
 	return (
 		<div className="p-4">
 			<div>Total words: {totalWords}</div>
 			<div>Average accuracy: {averageAccuracy.toFixed(0)}%</div>
-			<div>Top 5 most mistaken letters: {topMistakenLetters.join(", ")}</div>
-			{/* rest of your component */}
 		</div>
 	);
 };
