@@ -144,11 +144,15 @@ export default function TypingGame() {
 		const data = await response.json();
 
 		if (data.words && data.words.length > 0) {
-			console.log(data.words[0].reading);
-			return {
-				english: word,
-				japanese: data.words[0].reading,
-			};
+			const commonWord = data.words.find((word: any) => word.common === true);
+
+			if (commonWord) {
+				console.log(commonWord.reading);
+				return {
+					english: word,
+					japanese: commonWord.reading,
+				};
+			}
 		}
 
 		return {
