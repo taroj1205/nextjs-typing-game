@@ -188,6 +188,7 @@ const WordsHistory = ({ stats }: { stats: Stats[] }) => {
 	const [searchTerm, setSearchTerm] = useState("");
 	const order = ["none", "asc", "desc"];
 	const [sortOrder, setSortOrder] = useState(order[0]);
+	const [accuracySortOrder, setAccuracySortOrder] = useState(order[0]);
 	const [showWrong, setShowWrong] = useState(false);
 
 	const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -195,13 +196,24 @@ const WordsHistory = ({ stats }: { stats: Stats[] }) => {
 	};
 
 	const handleSortClick = () => {
-		// Add this function
+		setAccuracySortOrder(order[0]);
 		if (sortOrder === order[0]) {
 			setSortOrder(order[1]);
 		} else if (sortOrder === order[1]) {
 			setSortOrder(order[2]);
 		} else {
 			setSortOrder(order[0]);
+		}
+	};
+
+	const handleAccuracySortClick = () => {
+		setSortOrder(order[0]);
+		if (accuracySortOrder === order[0]) {
+			setAccuracySortOrder(order[1]);
+		} else if (accuracySortOrder === order[1]) {
+			setAccuracySortOrder(order[2]);
+		} else {
+			setAccuracySortOrder(order[0]);
 		}
 	};
 
@@ -234,6 +246,12 @@ const WordsHistory = ({ stats }: { stats: Stats[] }) => {
 		filteredStats = filteredStats.sort((a, b) =>
 			b.english.localeCompare(a.english)
 		);
+	}
+
+	if (accuracySortOrder === order[1]) {
+		filteredStats = filteredStats.sort((a, b) => b.accuracy - a.accuracy);
+	} else if (accuracySortOrder === order[2]) {
+		filteredStats = filteredStats.sort((a, b) => a.accuracy - b.accuracy);
 	}
 
 	function renderFurigana(text: string) {
@@ -302,6 +320,23 @@ const WordsHistory = ({ stats }: { stats: Stats[] }) => {
 							/>
 						</th>
 						<th className="px-4 py-2 text-lg text-left">Translation</th>
+						<th className="px-4 py-2 text-lg text-center flex flex-row items-center justify-center">
+							Accuracy{" "}
+							<button
+								className="w-4 h-4 ml-2 p-2 flex items-center justify-center"
+								onClick={handleAccuracySortClick}>
+								{accuracySortOrder === order[1] ? (
+									"▲"
+								) : accuracySortOrder === order[2] ? (
+									"▼"
+								) : (
+									<div className="flex flex-col text-[0.5rem] leading-3">
+										<span>▲</span>
+										<span>▼</span>
+									</div>
+								)}
+							</button>
+						</th>
 					</tr>
 				</thead>
 				<tbody>
@@ -357,9 +392,13 @@ const StatsSummary = ({ stats }: { stats: Stats[] }) => {
 	const averageAccuracy = totalAccuracy / stats.length;
 
 	return (
-		<div className="p-4">
-			<div>Total words: {totalWords}</div>
-			<div>Average accuracy: {averageAccuracy.toFixed(0)}%</div>
+		<div className="p-4 rounded-md flex flex-col items-center space-y-4">
+			<div className="font-semibold text-lg self-start">
+				Total words: {totalWords}
+			</div>
+			<div className="font-semibold text-lg self-start">
+				Average accuracy: {averageAccuracy.toFixed(0)}%
+			</div>
 		</div>
 	);
 };
