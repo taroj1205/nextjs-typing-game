@@ -1,8 +1,10 @@
 "use client";
 import { Navbar } from "@/components/Navbar";
+import { getUsername } from "@/lib/getUsername";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@clerk/nextjs";
-import { useEffect, useState } from "react";
+import { clerkClient } from "@clerk/nextjs/server";
+import { useEffect, useRef, useState } from "react";
 import {
 	LineChart,
 	Line,
@@ -24,10 +26,11 @@ interface WordTooltipProps {
 	word: Word;
 }
 
-interface Stats {
+export interface Stats {
 	id: number;
-	user_id: string | null;
-	time_taken: number | null;
+	user_id: string;
+	username: string;
+	time_taken: number;
 	accuracy: number | null;
 	misstyped_letters: { [key: string]: string }[] | null;
 	words: Word[] | null;
@@ -44,6 +47,7 @@ export default function Dashboard() {
 	const [stats, setStats] = useState<Stats[]>([]);
 	const [loadingStats, setLoadingStats] = useState(true);
 	const { isLoaded, userId } = useAuth();
+	const username = useRef("");
 
 	useEffect(() => {
 		if (!isLoaded) return;
@@ -59,6 +63,7 @@ export default function Dashboard() {
 
 			if (error) console.error("Error fetching stats: ", error);
 			else {
+				username.current = String(await getUsername(userId));
 				const formattedData = data.map((stat) => {
 					console.log("Accuracy for stat", stat.id, ":", stat.accuracy);
 					return {
@@ -71,6 +76,7 @@ export default function Dashboard() {
 							minute: "2-digit",
 							hour12: false,
 						}),
+						username,
 						accuracy: parseFloat(stat.accuracy.toFixed(2)),
 						words: stat.words.map((word: Word, index: number) => ({
 							...word,
@@ -80,7 +86,6 @@ export default function Dashboard() {
 						})),
 					};
 				});
-				console.log("Total stats:", formattedData.length);
 				setStats(formattedData || []);
 				setLoadingStats(false);
 			}
@@ -92,13 +97,7 @@ export default function Dashboard() {
 	// Group stats by date and calculate total words for each date
 	const totalWordsPerDay = stats.reduce(
 		(acc: { [key: string]: number }, stat) => {
-			console.log(stat.created_at);
-			const [day, month, year] = stat.created_at.split("/");
-			const date = new Date(
-				`${year.split(",")[0]}-${month}-${day}`
-			).toISOString();
-
-			console.log(date, day, month, year.split(",")[0]);
+			const date = stat.created_at.split(",")[0];
 			const totalWords = stat.words ? stat.words.length : 0;
 
 			if (acc[date]) {
@@ -125,7 +124,7 @@ export default function Dashboard() {
 			<Navbar />
 			<div className="p-4 flex flex-col items-center max-w-[100svw]">
 				<div className="flex flex-col items-center">
-					<h2 className="text-4xl font-bold mb-4">Dashboard</h2>
+					<h2 className="text-4xl font-bold mb-4">Dashboard{username.current && ` - ${username.current}`}</h2>
 				</div>
 				{stats.length > 0 ? (
 					<div className="flex flex-col items-center justify-center max-w-[90svw] space-y-2">
