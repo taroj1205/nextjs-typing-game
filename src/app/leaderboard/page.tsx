@@ -132,7 +132,7 @@ export default function Leaderboard() {
 	return (
 		<div className="p-4 min-h-[100svh] flex flex-col items-center space-y-2">
 			<h2 className="text-4xl font-bold mb-4">Leaderboard</h2>
-			<DataGrid
+      <div className="max-w-[90svw]"><DataGrid
 				rows={rows}
 				columns={columns}
 				initialState={{
@@ -140,8 +140,9 @@ export default function Leaderboard() {
 						paginationModel: { page: page - 1, pageSize: rowsPerPage },
 					},
         }}
+        rowSelection={false}
 				pageSizeOptions={[5, 10]}
-			/>
+			/></div>
 		</div>
 	);
 }
