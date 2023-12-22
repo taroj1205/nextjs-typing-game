@@ -1,26 +1,43 @@
-// leaderboard.tsx
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import {
+	Table,
+	TableColumn,
+	TableBody,
+	TableRow,
+	TableCell,
+	TableHeader,
+} from "@nextui-org/react";
 import { getUsername } from "@/lib/getUsername";
 import { supabase } from "@/lib/supabase";
-import { Stats } from "../dashboard/page";
-import { DataGrid, GridColDef } from "@mui/x-data-grid";
 
 type SortKey = "username" | "fastest" | "totalWords";
 
-export default function Leaderboard() {
-	const [leaderboardData, setLeaderboardData] = useState<Stats[]>([]);
-	const [usernames, setUsernames] = useState<Record<string, string>>({});
-	const [fastestPerUser, setFastestPerUser] = useState<Record<string, number>>(
-		{}
-	);
-	const [totalWordsPerUser, setTotalWordsPerUser] = useState<
-		Record<string, number>
-	>({});
-	const [sortKey, setSortKey] = useState<SortKey>("username");
+interface LeaderboardData {
+	user_id: string;
+	username: string;
+	fastest: number;
+	totalWords: number;
+}
 
-	const [page, setPage] = useState(1);
-	const rowsPerPage = 10;
+interface SortDescriptor {
+	column: string;
+	direction: "ascending" | "descending";
+}
+
+export default function Leaderboard() {
+	const [leaderboardData, setLeaderboardData] = useState<LeaderboardData[]>([]);
+	const [sortKey, setSortKey] = useState<SortKey>("username");
+	const [sortDescriptor, setSortDescriptor] = useState<SortDescriptor>({
+		column: "username",
+		direction: "ascending",
+	});
+
+	const columnMapping: Record<string, SortKey> = {
+		"$.0": "username",
+		"$.1": "fastest",
+		"$.2": "totalWords",
+	};
 
 	useEffect(() => {
 		const fetchData = async () => {
@@ -30,13 +47,9 @@ export default function Leaderboard() {
 				if (error) {
 					console.error("Error fetching leaderboard data:", error);
 				} else {
-					const newUsernames: Record<string, string> = { ...usernames };
-					const newFastestPerUser: Record<string, number> = {
-						...fastestPerUser,
-					};
-					const newTotalWordsPerUser: Record<string, number> = {
-						...totalWordsPerUser,
-					};
+					const newUsernames: Record<string, string> = {};
+					const fastestTimePerUser = new Map<string, number>();
+					const totalWordsPerUser = new Map<string, number>();
 
 					for (let item of data) {
 						if (!newUsernames[item.user_id]) {
@@ -44,23 +57,31 @@ export default function Leaderboard() {
 						}
 
 						if (
-							!newFastestPerUser[item.user_id] ||
-							item.time_taken < newFastestPerUser[item.user_id]
+							!fastestTimePerUser.has(item.user_id) ||
+							(fastestTimePerUser.has(item.user_id) &&
+								item.time_taken < fastestTimePerUser.get(item.user_id)!)
 						) {
-							newFastestPerUser[item.user_id] = item.time_taken;
+							fastestTimePerUser.set(item.user_id, item.time_taken);
 						}
 
-						if (!newTotalWordsPerUser[item.user_id]) {
-							newTotalWordsPerUser[item.user_id] = item.words.length;
+						if (!totalWordsPerUser.has(item.user_id)) {
+							totalWordsPerUser.set(item.user_id, item.words.length);
 						} else {
-							newTotalWordsPerUser[item.user_id] += item.words.length;
+							totalWordsPerUser.set(
+								item.user_id,
+								totalWordsPerUser.get(item.user_id) + item.words.length
+							);
 						}
 					}
 
-					setUsernames(newUsernames);
-					setFastestPerUser(newFastestPerUser);
-					setTotalWordsPerUser(newTotalWordsPerUser);
-					setLeaderboardData(data);
+					setLeaderboardData(
+						Object.keys(newUsernames).map((userId) => ({
+							user_id: userId,
+							username: newUsernames[userId],
+							fastest: fastestTimePerUser.get(userId) || 0,
+							totalWords: totalWordsPerUser.get(userId) || 0,
+						}))
+					);
 				}
 			} catch (error) {
 				console.error("Error fetching leaderboard data:", error);
@@ -70,79 +91,88 @@ export default function Leaderboard() {
 		fetchData();
 	}, []);
 
-	const uniqueLeaderboardData = leaderboardData.reduce(
-		(acc: Stats[], curr: Stats) => {
-			const existingUser = acc.find((item) => item.user_id === curr.user_id);
+	const sortedData = useMemo(() => {
+		return [...leaderboardData].sort((a, b) => {
+			let comparison = 0;
 
-			if (!existingUser) {
-				// If the user doesn't exist in the accumulator, add it
-				acc.push(curr);
-			} else {
-				// If the user exists, check if the current item has a faster time or more words
-				if (
-					curr.time_taken < existingUser.time_taken ||
-					(curr.words && curr.words.length > (existingUser.words?.length ?? 0))
-				) {
-					// Replace the existing user with the current item
-					const index = acc.indexOf(existingUser);
-					acc[index] = curr;
-				}
-			}
-
-			return acc;
-		},
-		[]
-	);
-
-	const sortedLeaderboardData = [...uniqueLeaderboardData]
-		.sort((a, b) => {
-			switch (sortKey) {
+			switch (sortDescriptor.column) {
 				case "username":
-					return usernames[a.user_id].localeCompare(usernames[b.user_id]);
+					comparison = a.username.localeCompare(b.username);
+					break;
 				case "fastest":
-					return fastestPerUser[a.user_id] - fastestPerUser[b.user_id];
 				case "totalWords":
-					return totalWordsPerUser[b.user_id] - totalWordsPerUser[a.user_id];
+					comparison = a[sortDescriptor.column] - b[sortDescriptor.column];
+					break;
 				default:
-					return 0;
+					break;
 			}
-		})
-		.slice((page - 1) * rowsPerPage, page * rowsPerPage);
 
-	// Define the columns for the table
-	const columns: GridColDef[] = [
-		{ field: "username", headerName: "Username", width: 200 },
-		{ field: "fastest", headerName: "Fastest time (s)", type: "number", width: 170 },
-		{
-			field: "totalWords",
-			headerName: "Total Words",
-			type: "number",
-			width: 150,
-		},
-	];
+			return sortDescriptor.direction === "ascending"
+				? comparison
+				: -comparison;
+		});
+	}, [leaderboardData, sortDescriptor]);
 
-	// Inside the Leaderboard component
-	const rows = sortedLeaderboardData.map((data, index) => ({
-		id: index,
-		username: usernames[data.user_id],
-		fastest: fastestPerUser[data.user_id],
-		totalWords: totalWordsPerUser[data.user_id],
-	}));
-  
 	return (
 		<div className="p-4 min-h-[100svh] flex flex-col items-center space-y-2">
 			<h2 className="text-4xl font-bold mb-4">Leaderboard</h2>
-      <div className="max-w-[90svw]"><DataGrid
-				rows={rows}
-				columns={columns}
-				initialState={{
-					pagination: {
-						paginationModel: { page: page - 1, pageSize: rowsPerPage },
-					},
-        }}
-        rowSelection={false}
-				pageSizeOptions={[5, 10]}
-			/></div>
+			<div className="max-w-[90svw]">
+				<Table
+					aria-label="Leaderboard Table"
+					sortDescriptor={sortDescriptor}
+					onSortChange={(descriptor) => {
+						const column =
+              columnMapping[descriptor.column as keyof typeof columnMapping];
+            console.log(column);
+						setSortKey(column as SortKey);
+						setSortDescriptor((prevSortDescriptor: SortDescriptor) => {
+							if (prevSortDescriptor.column === column) {
+								return {
+									column: column,
+									direction:
+										prevSortDescriptor.direction === "ascending"
+											? "descending"
+											: "ascending",
+								};
+							} else {
+								return {
+									column: column,
+									direction: prevSortDescriptor.direction === "ascending" ? "descending" : "ascending",
+								};
+							}
+						});
+					}}>
+					<TableHeader>
+						<TableColumn
+							allowsSorting
+							id="username"
+							aria-label="Username Column">
+							Username
+						</TableColumn>
+						<TableColumn
+							allowsSorting
+							id="fastest"
+							aria-label="Fastest Time Column">
+							Fastest Time
+						</TableColumn>
+						<TableColumn
+							allowsSorting
+							id="totalWords"
+							aria-label="Total Words Column">
+							Total Words
+						</TableColumn>
+					</TableHeader>
+					<TableBody>
+						{sortedData.map((item) => (
+							<TableRow key={item.user_id}>
+								<TableCell>{item.username}</TableCell>
+								<TableCell>{item.fastest}</TableCell>
+								<TableCell>{item.totalWords}</TableCell>
+							</TableRow>
+						))}
+					</TableBody>
+				</Table>
+			</div>
 		</div>
 	);
 }
