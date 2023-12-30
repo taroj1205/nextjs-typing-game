@@ -5,7 +5,7 @@ import React, { Suspense } from "react";
 
 const HomePage = () => {
 	return (
-		<main className="flex-grow h-full flex flex-col items-center justify-between">
+		<div className="flex-grow h-full flex flex-col items-center justify-between">
 			<div className="hero h-full flex-grow w-full bg-blue-200 flex items-center justify-center">
 				<div className="text-center">
 					<h2 className="text-5xl text-blue-800 font-bold mb-6">
@@ -28,7 +28,7 @@ const HomePage = () => {
 					&copy; {new Date().getFullYear()} Typing Tutor. All rights reserved.
 				</p>
 			</footer> */}
-		</main>
+		</div>
 	);
 };
 
