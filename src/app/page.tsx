@@ -5,7 +5,7 @@ import React, { Suspense } from "react";
 
 const HomePage = () => {
 	return (
-		<div className="flex-grow h-full flex flex-col items-center justify-between">
+		<div className="flex-grow h-[calc(100svh-40px)] flex flex-col items-center justify-between">
 			<div className="hero h-full flex-grow w-full bg-blue-200 flex items-center justify-center">
 				<div className="text-center">
 					<h2 className="text-5xl text-blue-800 font-bold mb-6">
