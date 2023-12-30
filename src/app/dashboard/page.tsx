@@ -287,13 +287,13 @@ const WordsHistory = ({ stats }: { stats: Stats[] }) => {
 	}
 
 	return (
-		<div className="flex items-center flex-col px-4 w-full max-w-[600px]">
+		<div className="flex items-center flex-col px-4 w-screen max-w-[600px]">
 			<Input
 				placeholder="Search for words..."
 				value={searchTerm}
 				onChange={handleSearchChange}
 			/>
-			<table className="table-auto w-full text-center">
+			<table className="table-auto w-screen overflow-x-auto text-center">
 				<thead>
 					<tr>
 						<th className="px-4 py-2 text-lg text-right flex flex-row items-center justify-end">
