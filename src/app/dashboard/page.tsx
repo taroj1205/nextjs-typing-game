@@ -75,6 +75,7 @@ export default function Dashboard() {
 							minute: "2-digit",
 							hour12: false,
 						}),
+						date: new Date(stat.created_at).toLocaleDateString(),
 						username,
 						accuracy: parseFloat(stat.accuracy.toFixed(2)),
 						words: stat.words.map((word: Word, index: number) => ({
@@ -93,10 +94,12 @@ export default function Dashboard() {
 
 	const uniqueDates = Array.from(new Set(stats.map((stat) => stat.created_at)));
 
+	const onlyDates = Array.from(new Set(stats.map((stat) => stat.date)));
+
 	// Group stats by date and calculate total words for each date
 	const totalWordsPerDay = stats.reduce(
 		(acc: { [key: string]: number }, stat) => {
-			const date = stat.created_at.split(",")[0];
+			const date = stat.date;
 			const totalWords = stat.words ? stat.words.length : 0;
 
 			if (acc[date]) {
@@ -113,7 +116,7 @@ export default function Dashboard() {
 	// Convert the totalWordsPerDay object to an array
 	const totalWordsPerDayArray = Object.entries(totalWordsPerDay).map(
 		([date, totalWords]) => ({
-			date: new Date(date).toLocaleDateString(),
+			date,
 			totalWords,
 		})
 	);
@@ -157,7 +160,7 @@ export default function Dashboard() {
 								height={300}
 								data={totalWordsPerDayArray}>
 								<CartesianGrid strokeDasharray="3 3" />
-								<XAxis dataKey="date" ticks={uniqueDates} />
+								<XAxis dataKey="date" ticks={onlyDates} />
 								<YAxis />
 								<Tooltip />
 								<Legend />
@@ -338,7 +341,7 @@ const WordsHistory = ({ stats }: { stats: Stats[] }) => {
 				<tbody>
 					{filteredStats.length > 0 ? (
 						filteredStats.map((word, wordIndex) => (
-							<tr key={wordIndex} className="bg-gray-100 hover:bg-gray-200">
+							<tr key={wordIndex} className="hover:bg-gray-100">
 								<td className="border px-4 py-2 text-lg text-right">
 									{showWrong ? <WordTooltip word={word} /> : word.english}
 								</td>
