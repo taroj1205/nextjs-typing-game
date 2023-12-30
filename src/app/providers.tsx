@@ -27,7 +27,7 @@ export const Providers = ({ children }: { children: React.ReactNode }) => {
 					initialColorMode={defaultConfig.initialColorMode}
 				/>
 				<div className="w-screen h-10"></div>
-				<div className="w-screen fixed top-0 bg-white z-50">
+				<div className="w-screen fixed top-0.5 bg-white z-50">
 					<NavMenu />
 				</div>
 				{children}
