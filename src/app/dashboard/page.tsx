@@ -1,9 +1,8 @@
 "use client";
-import { Navbar } from "@/components/Navbar";
 import { getUsername } from "@/lib/getUsername";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@clerk/nextjs";
-import { clerkClient } from "@clerk/nextjs/server";
+import { Input } from "@yamada-ui/react";
 import { useEffect, useRef, useState } from "react";
 import {
 	LineChart,
@@ -121,10 +120,11 @@ export default function Dashboard() {
 
 	return (
 		<>
-			<Navbar />
-			<div className="p-4 flex flex-col items-center max-w-[100svw]">
+			<div className="p-4 flex flex-col items-center max-w-screen">
 				<div className="flex flex-col items-center">
-					<h2 className="text-4xl font-bold mb-4">Dashboard{username.current && ` - ${username.current}`}</h2>
+					<h2 className="text-4xl font-bold mb-4">
+						Dashboard{username.current && ` - ${username.current}`}
+					</h2>
 				</div>
 				{stats.length > 0 ? (
 					<div className="flex flex-col items-center justify-center max-w-[90svw] space-y-2">
@@ -282,17 +282,14 @@ const WordsHistory = ({ stats }: { stats: Stats[] }) => {
 			}
 		});
 	}
+
 	return (
 		<div className="flex items-center flex-col px-4 w-full max-w-[600px]">
-			<div className="flex items-center justify-center bg-gray-200 p-4 rounded-md my-4">
-				<input
-					type="text"
-					className="flex-grow mr-4 p-2 rounded-md border-2 border-gray-300"
-					placeholder="Search for words..."
-					value={searchTerm}
-					onChange={handleSearchChange}
-				/>
-			</div>
+			<Input
+				placeholder="Search for words..."
+				value={searchTerm}
+				onChange={handleSearchChange}
+			/>
 			<table className="table-auto w-full text-center">
 				<thead>
 					<tr>
@@ -339,21 +336,29 @@ const WordsHistory = ({ stats }: { stats: Stats[] }) => {
 					</tr>
 				</thead>
 				<tbody>
-					{filteredStats.map((word, wordIndex) => (
-						<tr key={wordIndex} className="bg-gray-100 hover:bg-gray-200">
-							<td className="border px-4 py-2 text-lg text-right">
-								{showWrong ? <WordTooltip word={word} /> : word.english}
-							</td>
-							<td className="border px-4 py-2 text-lg text-left">
-								{word.japanese.kanji
-									? renderFurigana(word.japanese.furigana)
-									: word.japanese.kana}
-							</td>
-							<td className="border px-4 py-2 text-lg text-right">
-								{word.accuracy.toFixed(0)}%
+					{filteredStats.length > 0 ? (
+						filteredStats.map((word, wordIndex) => (
+							<tr key={wordIndex} className="bg-gray-100 hover:bg-gray-200">
+								<td className="border px-4 py-2 text-lg text-right">
+									{showWrong ? <WordTooltip word={word} /> : word.english}
+								</td>
+								<td className="border px-4 py-2 text-lg text-left">
+									{word.japanese.kanji
+										? renderFurigana(word.japanese.furigana)
+										: word.japanese.kana}
+								</td>
+								<td className="border px-4 py-2 text-lg text-right">
+									{word.accuracy.toFixed(0)}%
+								</td>
+							</tr>
+						))
+					) : (
+						<tr>
+							<td colSpan={3} className="text-center py-4">
+								No results
 							</td>
 						</tr>
-					))}
+					)}
 				</tbody>
 			</table>
 		</div>

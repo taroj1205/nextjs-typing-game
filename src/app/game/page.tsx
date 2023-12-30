@@ -1,8 +1,10 @@
 "use client";
+import { MenuBar } from "@/components/MenuBar";
 import { Database } from "@/lib/database.types";
 import { supabase } from "@/lib/supabase";
 import { SignInButton, SignedOut, useAuth } from "@clerk/nextjs";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { Text, useLoading } from "@yamada-ui/react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { generate } from "random-words";
@@ -111,11 +113,11 @@ export default function TypingGame() {
 				scaleFactor > 1 ? 1 : scaleFactor
 			})`;
 		}
-	}, [inputValue, isLoading, showTranslation, currentWord]);
+	}, [inputValue, showTranslation, currentWord]);
 
 	const adjustHeight = useCallback(() => {
 		const height = window.innerHeight;
-		setGameHeight(`${height}px`);
+		setGameHeight(`${height - 36}px`);
 		requestAnimationFrame(resizeText);
 	}, [resizeText]);
 
@@ -174,19 +176,31 @@ export default function TypingGame() {
 		return translations;
 	};
 
+	const {screen} = useLoading();
+
 	useEffect(() => {
+		screen.start({message: <Text size="lg">Preparing words...</Text>});
 		setIsLoading(true);
-		fetchWords().then((data) => {
-			const validTranslations = data.filter(Boolean);
-			setWords(validTranslations);
-			setTimeout(() => {
-				setIsLoading(false);
-				stopwatch.current.start(); // Start the stopwatch
-			}, 1000);
-			inputRef.current?.focus();
-			setCurrentWord(validTranslations[0].english);
-			resizeText();
-		});
+		const timeout = new Promise((_, reject) =>
+			setTimeout(() => reject(new Error("Try reloading")), 10000)
+		);
+		Promise.race([fetchWords(), timeout])
+			.then((data: any) => {
+				const validTranslations = data.filter(Boolean);
+				setWords(validTranslations);
+				setTimeout(() => {
+					setIsLoading(false);
+					screen.finish()
+					stopwatch.current.start();
+				}, 1000);
+				inputRef.current?.focus();
+				setCurrentWord(validTranslations[0].english);
+				resizeText();
+			})
+			.catch((error) => {
+				alert(error.message);
+				screen.finish()
+			});
 	}, []);
 
 	const getActualTextWidth = (text: string, font: string) => {
@@ -256,12 +270,7 @@ export default function TypingGame() {
 	};
 
 	if (isLoading) {
-		return (
-			<main className="auto-resize flex flex-col items-center justify-center h-[100svh] bg-gray-100 text-gray-800">
-				<h1 className="text-6xl mb-4">Typing Game</h1>
-				<h2 className="text-4xl mb-4">Loading...</h2>
-			</main>
-		);
+		return (null);
 	}
 
 	function renderFurigana(text: string) {
@@ -363,7 +372,7 @@ export default function TypingGame() {
 		);
 
 		return (
-			<main className="flex flex-col items-center justify-center h-[100svh] bg-gray-100">
+			<main className="flex flex-col items-center justify-center h-[100svh] bg-gray-100" style={{height: gameHeight}}>
 				<h1 className="text-5xl mb-4 text-blue-500">Finished!</h1>
 				<div className="mt-4 flex flex-col space-y-2 bg-white text-gray-800 rounded-lg shadow-lg p-6 w-full max-w-md">
 					<table className="table-auto">
@@ -476,7 +485,7 @@ export default function TypingGame() {
 
 	return (
 		<main
-			className="auto-resize flex flex-col items-center justify-center h-[100svh] w-screen typing-text bg-gray-100 text-gray-800"
+			className="auto-resize flex flex-col items-center justify-center w-screen h-[100svh] typing-text bg-gray-100 text-gray-800"
 			style={{ height: gameHeight }}
 			onClick={() => inputRef.current?.focus()}>
 			{!showTranslation ? (
@@ -513,15 +522,12 @@ export default function TypingGame() {
 							{words[currentWordIndex].english.substring(inputValue.length)}
 						</span>
 					</p>
-					<div className="flex items-center justifycenter">
+					<div className="flex items-center justify-center">
 						<input
 							ref={inputRef}
-							className="inset-0 z-0 absolute opacity-0 p-2 bg-transparent text-transparent"
+							className="z-0 fixed opacity-0 bg-transparent text-transparent"
 							value={inputValue}
 							onChange={handleInputChange}
-							onBlur={() => {
-								inputRef.current?.focus();
-							}}
 							onFocus={(event) => {
 								// Change input language to English variants if not already
 								event.target.lang = "en-US";

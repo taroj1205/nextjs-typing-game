@@ -1,11 +1,11 @@
+import { NavMenu } from "@/components/NavMenu";
 import { Navbar } from "@/components/Navbar";
 import Link from "next/link";
-import React from "react";
+import React, { Suspense } from "react";
 
 const HomePage = () => {
 	return (
-    <main className="min-h-[100svh] flex flex-col items-center justify-between">
-      <Navbar />
+		<main className="min-h-[100svh] flex flex-col items-center justify-between">
 			<div className="hero h-full flex-grow w-full bg-blue-200 flex items-center justify-center">
 				<div className="text-center">
 					<h2 className="text-5xl text-blue-800 font-bold mb-6">
@@ -23,11 +23,11 @@ const HomePage = () => {
 				</div>
 			</div>
 
-			<footer className="bg-blue-800 w-full text-white text-center p-4">
+			{/* <footer className="bg-blue-800 w-full text-white text-center p-4">
 				<p>
 					&copy; {new Date().getFullYear()} Typing Tutor. All rights reserved.
 				</p>
-			</footer>
+			</footer> */}
 		</main>
 	);
 };
