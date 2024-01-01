@@ -81,6 +81,7 @@ export default function TypingGame() {
 	const [showWrong, setShowWrong] = useState(false);
 
 	useEffect(() => {
+		resizeText();
 		if (showTranslation) {
 			setTypedWords((prevWords) => [
 				...prevWords,
@@ -163,44 +164,56 @@ export default function TypingGame() {
 		};
 	};
 
+	type Translation = {
+		english: string;
+		japanese: {
+			kanji: string;
+			kana: string;
+			furigana?: string;
+		};
+	};
+
 	const fetchWords = async () => {
 		const words = generate(5);
 		const translations = [];
 		for (const word of words) {
-			let translation;
+			let translation: Translation;
+			let attempts = 0;
 			do {
-				translation = await getTranslation(word);
-			} while (!translation.japanese.kanji && !translation.japanese.kana);
+				translation = await new Promise((resolve) => {
+					setTimeout(async () => {
+						const newWord = attempts > 0 ? generate(1)[0] : word;
+						const newTranslation = await getTranslation(newWord);
+						resolve(newTranslation);
+					}, 1000 * attempts);
+				});
+				attempts++;
+			} while (
+				!translation.japanese.kanji &&
+				!translation.japanese.kana &&
+				attempts < 5
+			);
 			translations.push(translation);
 		}
 		return translations;
 	};
-
-	const {screen} = useLoading();
+	const { screen } = useLoading();
 
 	useEffect(() => {
-		screen.start({message: <Text size="lg">Preparing words...</Text>});
+		screen.start({ message: <Text size="lg">Preparing words...</Text> });
 		setIsLoading(true);
-		const timeout = new Promise((_, reject) =>
-			setTimeout(() => reject(new Error("Try reloading")), 10000)
-		);
-		Promise.race([fetchWords(), timeout])
-			.then((data: any) => {
-				const validTranslations = data.filter(Boolean);
-				setWords(validTranslations);
-				setTimeout(() => {
-					setIsLoading(false);
-					screen.finish()
-					stopwatch.current.start();
-				}, 1000);
+		fetchWords().then((data: any) => {
+			const validTranslations = data.filter(Boolean);
+			setWords(validTranslations);
+			setTimeout(() => {
+				setIsLoading(false);
+				screen.finish();
+				stopwatch.current.start();
 				inputRef.current?.focus();
 				setCurrentWord(validTranslations[0].english);
 				resizeText();
-			})
-			.catch((error) => {
-				alert(error.message);
-				screen.finish()
-			});
+			}, 1000);
+		});
 	}, []);
 
 	const getActualTextWidth = (text: string, font: string) => {
@@ -267,10 +280,11 @@ export default function TypingGame() {
 			});
 		}
 		setTotalChars((prev) => prev + 1);
+		resizeText();
 	};
 
 	if (isLoading) {
-		return (null);
+		return null;
 	}
 
 	function renderFurigana(text: string) {
@@ -372,7 +386,9 @@ export default function TypingGame() {
 		);
 
 		return (
-			<main className="flex flex-col items-center justify-center h-[100svh] bg-gray-100" style={{height: gameHeight}}>
+			<main
+				className="flex flex-col items-center justify-center h-[100svh] bg-gray-100"
+				style={{ height: gameHeight }}>
 				<h1 className="text-5xl mb-4 text-blue-500">Finished!</h1>
 				<div className="mt-4 flex flex-col space-y-2 bg-white text-gray-800 rounded-lg shadow-lg p-6 w-full max-w-md">
 					<table className="table-auto">
@@ -504,10 +520,14 @@ export default function TypingGame() {
 									key={index}
 									className={isCharCorrect ? "text-green-500" : "text-red-500"}>
 									{isCharCorrect ? (
-										char
+										char === " " ? (
+											"_"
+										) : (
+											char
+										)
 									) : (
 										<div className="flex items-center flex-col">
-											<span className="z-10">{char}</span>
+											<span className="z-10">{char === " " ? "_" : char}</span>
 											<span
 												className="ruby z-0 text-gray-500 absolute"
 												style={{ fontSize: "25%" }}>

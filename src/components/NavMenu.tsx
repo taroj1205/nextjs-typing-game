@@ -55,6 +55,9 @@ export function NavMenu() {
 					<NavigationMenuLink href="/" className={navigationMenuTriggerStyle()}>
 						Home
 					</NavigationMenuLink>
+					<NavigationMenuLink href="/game" className={navigationMenuTriggerStyle()}>
+						Play
+					</NavigationMenuLink>
 				</NavigationMenuItem>
 				{isLoaded && userId ? (
 					<>

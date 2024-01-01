@@ -14,7 +14,7 @@ import {
 	CartesianGrid,
 } from "recharts";
 
-interface Word {
+export interface Word {
 	english: string;
 	japanese: { kanji: string; kana: string; furigana: string };
 	accuracy: number;
@@ -293,7 +293,7 @@ const WordsHistory = ({ stats }: { stats: Stats[] }) => {
 				value={searchTerm}
 				onChange={handleSearchChange}
 			/>
-			<table className="table-auto w-screen overflow-x-auto text-center">
+			<table className="table-auto w-screen max-w-[600px] overflow-x-auto text-center">
 				<thead>
 					<tr>
 						<th className="px-4 py-2 text-lg text-right flex flex-row items-center justify-end">

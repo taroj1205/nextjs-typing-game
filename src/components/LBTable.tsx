@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { getUsername } from "@/lib/getUsername";
-import { Column, Table } from "@yamada-ui/table";
+import { Column, PagingTable, Table } from "@yamada-ui/table";
 
 interface LeaderboardData {
 	user_id: string;
@@ -85,7 +85,7 @@ export default function LeaderboardTable() {
 	}, []);
 
 	return (
-		<Table
+		<PagingTable
 			variant="striped"
 			defaultSort={[{ id: "username", desc: false }]}
 			highlightOnHover
