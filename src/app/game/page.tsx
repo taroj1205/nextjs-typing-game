@@ -61,7 +61,7 @@ export default function TypingGame() {
 	const [isCorrect, setIsCorrect] = useState(0);
 	const inputRef = useRef<HTMLInputElement>(null);
 	const charRef = useRef<HTMLParagraphElement>(null);
-	const translationRef = useRef<HTMLParagraphElement>(null);
+	const translationRef = useRef<HTMLTableCellElement>(null);
 	const [gameHeight, setGameHeight] = useState("100svh");
 	const [words, setWords] = useState<
 		{
@@ -80,6 +80,20 @@ export default function TypingGame() {
 	const stopwatch = useRef(new Stopwatch());
 	const [showWrong, setShowWrong] = useState(false);
 
+	const resizeText = useCallback(() => {
+		if (charRef.current) {
+			const font = window.getComputedStyle(charRef.current).font;
+			console.log(currentWord);
+			const text = inputValue.length > 0 ? inputValue : currentWord;
+			const textWidth = getActualTextWidth(text, font);
+			const containerWidth = window.innerWidth - 20;
+			const scaleFactor = containerWidth / textWidth;
+			charRef.current.style.transform = `scale(${
+				scaleFactor > 1 ? 1 : scaleFactor
+			})`;
+		}
+	}, [inputValue, currentWord]);
+
 	useEffect(() => {
 		resizeText();
 		if (showTranslation) {
@@ -96,25 +110,11 @@ export default function TypingGame() {
 
 			return () => clearTimeout(timer); // Clean up the timer
 		}
-	}, [showTranslation]);
+	}, [currentWordIndex, resizeText, showTranslation, words]);
 
 	useEffect(() => {
 		inputRef.current?.focus();
 	}, [showTranslation]);
-
-	const resizeText = useCallback(() => {
-		if (charRef.current) {
-			const font = window.getComputedStyle(charRef.current).font;
-			console.log(currentWord);
-			const text = inputValue.length > 0 ? inputValue : currentWord;
-			const textWidth = getActualTextWidth(text, font);
-			const containerWidth = window.innerWidth - 20;
-			const scaleFactor = containerWidth / textWidth;
-			charRef.current.style.transform = `scale(${
-				scaleFactor > 1 ? 1 : scaleFactor
-			})`;
-		}
-	}, [inputValue, showTranslation, currentWord]);
 
 	const adjustHeight = useCallback(() => {
 		const height = window.innerHeight;
@@ -516,7 +516,7 @@ export default function TypingGame() {
 							const isCharCorrect =
 								words[currentWordIndex].english.charAt(index) === char;
 							return (
-								<span
+								<table
 									key={index}
 									className={isCharCorrect ? "text-green-500" : "text-red-500"}>
 									{isCharCorrect ? (
@@ -526,16 +526,16 @@ export default function TypingGame() {
 											char
 										)
 									) : (
-										<div className="flex items-center flex-col">
-											<span className="z-10">{char === " " ? "_" : char}</span>
-											<span
+										<tr className="flex items-center flex-col">
+											<td className="z-10">{char === " " ? "_" : char}</td>
+											<td
 												className="ruby z-0 text-gray-500 absolute"
 												style={{ fontSize: "25%" }}>
 												{words[currentWordIndex].english.charAt(index)}
-											</span>
-										</div>
+											</td>
+										</tr>
 									)}
-								</span>
+								</table>
 							);
 						})}
 						<span id="not-typed" className="text-gray-500">
@@ -561,11 +561,15 @@ export default function TypingGame() {
 					</div>
 				</>
 			) : (
-				<p ref={translationRef} id="translation" className="translation">
-					{words[currentWordIndex].japanese.kanji
-						? renderFurigana(words[currentWordIndex].japanese.furigana)
-						: words[currentWordIndex].japanese.kana}
-				</p>
+				<table>
+					<tr>
+						<td ref={translationRef} id="translation" className="translation">
+							{words[currentWordIndex].japanese.kanji
+								? renderFurigana(words[currentWordIndex].japanese.furigana)
+								: words[currentWordIndex].japanese.kana}
+						</td>
+					</tr>
+				</table>
 			)}
 		</main>
 	);
